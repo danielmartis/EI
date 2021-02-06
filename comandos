@@ -1,3 +1,0 @@
-iconv -f iso-8859-1 -t utf-8 tokenizador.cpp -o tokenizador2.cpp
-g++ -g -std=gnu++0x tokenizador.cpp man.cpp -o practica1
-
