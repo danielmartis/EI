@@ -52,7 +52,7 @@ class Tokenizador {
         // Cambia la variable privada "pasarAminuscSinAcentos". Atenciï¿½n al formato de codificaciï¿½n del corpus. Se utilizarï¿½ el formato actual ISO-8859.
 
         bool PasarAminuscSinAcentos ();
-        // Devuelve el contenido de la variable privada "pasarAmniuscSinAcentos"
+        // Devuelve el contenido de la variable privada "pasarAmniuscSinAcentos" ñ
 
         string::size_type DetectarCasosEspeciales(const string& t, string::size_type& p, string::size_type& pi) const;
 

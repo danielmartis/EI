@@ -127,7 +127,7 @@ bool Tokenizador::TokenizarDirectorio(const string& dirAIndexar) const {
         return TokenizarListaFicheros(".lista_fich");
     }
 }
-// Comprobar si nuevoDelimiters contiene delimitadores repetidos.
+// Comprobar si nuevoDelimiters contiene delimitadores repetidos ñ.
 void Tokenizador::DelimitadoresPalabra (const string& nuevoDelimiters) {
     delimiters = nuevoDelimiters;
 }
