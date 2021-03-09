@@ -5,14 +5,15 @@
 using namespace std;
 
 int main() {
-	Tokenizador tk(",.·# ",false,false);
+	Tokenizador tk("/ ",true,false);
+	tk.AnyadirDelimitadoresPalabra("@");
 	string NombreArchivo = "prueba";
-	string cad = "hola adios , , . #  prueba";
+	string cad = "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ";
 	list<string> ls;
 	string anyadir;
 	tk.Tokenizar(NombreArchivo);
 	tk.Tokenizar(cad,ls);
-	cout<<ls.size();
+	//cout<<ls.size();
 	list<string>::iterator itS;
 	for(itS = ls.begin(); itS!=ls.end(); itS++){
 	  cout<<(*itS)<<endl;
