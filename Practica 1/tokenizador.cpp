@@ -3,7 +3,7 @@
 #include <sys/stat.h>
 #include <iostream>
 #include <cstdlib>
-#include <regex>
+#include <sstream>
 using namespace std;
 // Falta detectar si hay delimitadores repetidos.
 Tokenizador::Tokenizador (const string& delimitadoresPalabra, const bool& kcasosEspeciales, const bool& minuscSinAcentos){
@@ -30,47 +30,69 @@ Tokenizador::~Tokenizador () {
 }
 
 Tokenizador& Tokenizador::operator= (const Tokenizador& tk) {
-    this->casosEspeciales = tk.casosEspeciales;
-    this->delimiters = tk.delimiters;
-    this->pasarAminuscSinAcentos = tk.pasarAminuscSinAcentos;
-    return *this;
+    if(this != &tk){
+        this->casosEspeciales = tk.casosEspeciales;
+        this->delimiters = tk.delimiters;
+        this->pasarAminuscSinAcentos = tk.pasarAminuscSinAcentos;
+        return *this;
+    }
 }
 
-// Falta detectar si hay casos especiales activados y actuar en consecuencia ï¿½ ï¿½
-void Tokenizador::Tokenizar (string& str, list<string>& tokens) const{
+// Falta detectar si hay casos especiales activados y actuar en consecuencia ? ?
+void Tokenizador::Tokenizar (const string& str, list<string>& tokens) const{
     string::size_type lastPos;
     string::size_type pos;
-    string delimitersEspeciales = delimiters;
-    string prueba;
+    stringstream delimitersEspeciales;
+    string esp;
+    string contenido = str;
+    if(casosEspeciales){
+        delimitersEspeciales.str(delimiters + " ");
+        esp = delimitersEspeciales.str();
+    }
+    string prueba = "";
+    int estado = -1;
     if(pasarAminuscSinAcentos){
-        QuitarAcentosMayus(str);
+        QuitarAcentosMayus(contenido);
     }
     //delimitersEspeciales.resize(delimitersEspeciales.size()+1, ' ');
     if(!casosEspeciales){
-        lastPos = str.find_first_not_of(delimiters,0);
-        pos = str.find_first_of(delimiters,lastPos);
+        lastPos = contenido.find_first_not_of(delimiters,0);
+        pos = contenido.find_first_of(delimiters,lastPos);
     }
     else{
-        lastPos = str.find_first_not_of(delimiters,0);
-        pos = str.find_first_of(delimitersEspeciales,lastPos);
+        lastPos = contenido.find_first_not_of(esp,0);
+        pos = contenido.find_first_of(esp,lastPos);
     }
     //cout<<"Pos: "<<pos<<"LastPos: "<<lastPos;
     while(string::npos != pos || string::npos != lastPos){
         if(casosEspeciales){
             //cout<<"Pos: " <<pos;
-            DetectarCasosEspeciales(str,pos, lastPos, delimitersEspeciales);
+            estado = DetectarCasosEspeciales(contenido,pos, lastPos, esp);
+            if(estado = 2){
+                if(lastPos>0){
+                    if(contenido[lastPos-1] == ',' || contenido[lastPos-1] == '.'){
+                        prueba = contenido.substr(lastPos-1, pos-lastPos);
+                        prueba.insert(prueba.begin(),'0');
+                    }
+                }
+            }
             //cout<<"Pos: " << pos;
         }
-        tokens.push_back(str.substr(lastPos, pos - lastPos));
-        if(!casosEspeciales){
-            lastPos = str.find_first_not_of(delimiters,pos);
-            pos = str.find_first_of(delimiters,lastPos);
+        if(prueba !=""){
+            tokens.push_back(prueba);
+            prueba = "";
         }
         else{
-            lastPos = str.find_first_not_of(delimiters,pos);
-            pos = str.find_first_of(delimitersEspeciales ,lastPos);
+            tokens.push_back(contenido.substr(lastPos, pos - lastPos));
         }
-
+        if(!casosEspeciales){
+            lastPos = contenido.find_first_not_of(delimiters,pos);
+            pos = contenido.find_first_of(delimiters,lastPos);
+        }
+        else{
+            lastPos = contenido.find_first_not_of(esp,pos);
+            pos = contenido.find_first_of(esp ,lastPos);
+        }
     }
 }
 // Llama a Tokenizar, por lo que no hace falta detectar casos especiales.
@@ -148,7 +170,7 @@ bool Tokenizador::TokenizarDirectorio(const string& dirAIndexar) const {
         return TokenizarListaFicheros(".lista_fich");
     }
 }
-// Comprobar si nuevoDelimiters contiene delimitadores repetidos ï¿½.
+// Comprobar si nuevoDelimiters contiene delimitadores repetidos ?.
 void Tokenizador::DelimitadoresPalabra (const string& nuevoDelimiters) {
     delimiters = "";
     AnyadirDelimitadoresPalabra(nuevoDelimiters);
@@ -184,19 +206,36 @@ bool Tokenizador::PasarAminuscSinAcentos (){
     return pasarAminuscSinAcentos;
 }
 
-void Tokenizador::DetectarCasosEspeciales(const string& t,string::size_type& p, string::size_type& pi, string& de) const {
+int Tokenizador::DetectarCasosEspeciales(const string& t,string::size_type& p, string::size_type& pi, string& de) const {
     string::size_type nuevaPos = p;
     int estado = 0;
     string::size_type a,b;
     bool detener = false;
     int arroba = 0;
     bool coma = false;
+    bool numeros = true;
     if(t.substr(pi,4).compare("ftp:") == 0|| t.substr(pi,5).compare("http:") == 0|| t.substr(pi,6).compare("https:") == 0){
         if(t[p] == '_' || t[p] == ':' || t[p] == '/' || t[p] == '.' || t[p] == '?' || t[p] == '&' || t[p] == '-' || t[p] == '=' || t[p] == '#' || t[p] == '@'){ 
             estado = 1;
         }
     }
-    else if(t[p] == '.' || t[p] == ','){
+    if(p!= string::npos){
+        for(int i = pi; i<p; i++){
+            if(!esNumero(t[i])){
+                //cout<<t[i]<<" ";
+                numeros = false;
+            }
+        }
+    }
+    else if(p == string::npos){
+        for(int i = pi; i<t.size(); i++){
+            if(!esNumero(t[i])){
+                //cout<<t[i]<<" ";
+                numeros = false;
+            }
+        }
+    }
+    if((t[p] == '.' || t[p] == ',') && numeros){
         estado = 2;
     }
     else if(t[p] == '@'){
@@ -206,7 +245,7 @@ void Tokenizador::DetectarCasosEspeciales(const string& t,string::size_type& p, 
     else if(t[p] == '-'){
         estado = 4;
     }
-    else if(t[p] == '@'){
+    else if(t[p] == '.'){
         estado = 5;
     }
     switch(estado){
@@ -238,6 +277,40 @@ void Tokenizador::DetectarCasosEspeciales(const string& t,string::size_type& p, 
             break;
 
         case 2:
+            b = a = p;
+            do{
+                a = t.find_first_of(de,a+1);
+                if(a!= string::npos){
+                    for(int i = b; i<a; i++){
+                        if(!esNumero(t[i])){
+                            //cout<<t[i]<<" ";
+                            numeros = false;
+                        }
+                    }
+                }
+                else if(a == string::npos){
+                    for(int i = b; i<t.size(); i++){
+                        if(!esNumero(t[i])){
+                            //cout<<t[i]<<" ";
+                            numeros = false;
+                        }
+                    }
+                }
+                if(a - b == 1 && numeros){
+                    p = b;
+                    detener = true;
+                }
+                
+                else if(t[a] != '.' && t[a] != ',' && numeros){
+                    p = a;
+                    detener = true;
+                }
+                b = a;
+
+            }while(a != string::npos && !detener && (t[a] == '.'|| t[a] ==','));
+            if(a == string::npos && numeros){
+                p = a;
+            }
             break;
 
         case 3:
@@ -296,10 +369,30 @@ void Tokenizador::DetectarCasosEspeciales(const string& t,string::size_type& p, 
             break;
 
         case 5:
+            b = a = p;
+            do{
+                a = t.find_first_of(de,a+1);
+                if(a - b == 1){
+                    p = b;
+                    detener = true;
+                }
+                else if(t[a] != '.'){
+                    p = a;
+                    detener = true;
+                }
+                b= a;
+            }while(a != string::npos && !detener && t[a] == '.');
+            if(p == string::npos){
+                //cout<<t[t.size()-1]<<" ";
+                if(t[t.size()-1] == '.'){
+                    p = t.size()-1;
+                }
+            }
             break;
     }
+    return estado;
 }
-//ï¿½
+//?
 void Tokenizador::QuitarAcentosMayus(string& c) const{
     //cout<<(int) 'o';
     for(int i = 0; i<c.size(); i++){
@@ -318,17 +411,35 @@ void Tokenizador::QuitarAcentosMayus(string& c) const{
         else if(c[i] == 'ú' || c[i] == 'ù' || c[i] == 'Ú' || c[i] == 'Ù'){
             c.replace(i,1,"u");
         }
-        if((c[i]>='A' && c[i] <= 'Z') || c[i] == 'Ñ'){
+        if((c[i]>='A' && c[i] <= 'Z') || c[i] == '?'){
             c[i] += 32;
         }
     }
 }
 
-void Tokenizador::Minusculas(string& t) const{
-    for(int i = 0; i<t.size(); i++){
+bool Tokenizador::esNumero(const char& c) const{
+    if(c >= '0' && c<='9'){
+        return true;
+    }
+    return false;
+}
 
+void Tokenizador::delimitadorEspecial(string& de) const{
+    
+    //cout<<"hola";
+    for(int i = 0; i<delimiters.size(); i++){
+        if(de.find_first_of(delimiters[i]) != string::npos){
+
+        } 
+        else{
+            de.resize(de.size()+1,delimiters[i]);
+            if(de.find_first_of(' ') == string::npos){
+                de.resize(de.size()+1,' ');
+            }
+        }
     }
 }
+
 ostream& operator<<(ostream& os, const Tokenizador& tk){
     os<<"Delimiters: "<<tk.delimiters << " TRATA CASOS ESPECIALES: " << tk.casosEspeciales << " PASAR A MINUSCULAS Y SIN ACENTOS: " << tk.pasarAminuscSinAcentos;
     return os;

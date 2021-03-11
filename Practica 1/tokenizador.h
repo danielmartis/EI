@@ -1,10 +1,15 @@
 #include <string>
 #include <list>
+#include <fstream>
+#include <sys/stat.h>
+#include <iostream>
+#include <cstdlib>
+#include <sstream>
 
 using namespace std;
 class Tokenizador {
         friend ostream& operator<<(ostream&, const Tokenizador&);
-        // cout << "DELIMITADORES: " <<delimiters << " TRATA CASOS ESPECIALES: " << casosEspeciales << " PASAR A MINUSCULAS Y SIN ACENTOS: " << pasarAminuscSinAcentos;
+        // ñcout << "DELIMITADORES: " <<delimiters << " TRATA CASOS ESPECIALES: " << casosEspeciales << " PASAR A MINUSCULAS Y SIN ACENTOS: " << pasarAminuscSinAcentos;
 
     public:
         Tokenizador (const string& delimitadoresPalabra, const bool& kcasosEspeciales, const bool& minuscSinacentos);
@@ -19,7 +24,7 @@ class Tokenizador {
 
         Tokenizador& operator= (const Tokenizador&);
 
-        void Tokenizar (string& str, list<string>& tokens) const;
+        void Tokenizar (const string& str, list<string>& tokens) const;
         // Tokeniza str devolviendo el resultado en tokens. La lista tokens se vaciar? antes de almacenar el resultado de la tokenizaci?n.
 
         bool Tokenizar (const string& i, const string& f) const;
@@ -54,10 +59,7 @@ class Tokenizador {
         bool PasarAminuscSinAcentos ();
         // Devuelve el contenido de la variable privada "p??asarAmniuscSinAcentos" ?
 
-        void DetectarCasosEspeciales(const string& t, string::size_type& p,string::size_type& pi, string& de) const;
 
-        void QuitarAcentosMayus(string& c) const;
-        void Minusculas(string& t) const;
     private:
         string delimiters;
         // Delimitadores de t?rminos. Aunque se modifique la forma de almacenamiento itnerna para mejorar la eficiencia, este campo debe peranecer para indicar el orden en que se introdujeron los delimitadores.
@@ -67,4 +69,11 @@ class Tokenizador {
 
         bool pasarAminuscSinAcentos;
         // Si true pasar? el token a min?sculas y quitar? acentos, antes de realizar la tokenizac?n.
+
+        int DetectarCasosEspeciales(const string& t, string::size_type& p,string::size_type& pi, string& de) const;
+
+        void QuitarAcentosMayus(string& c) const;
+
+        bool esNumero(const char& c) const;
+        void delimitadorEspecial(string& de) const;
 };
