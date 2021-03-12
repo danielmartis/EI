@@ -45,6 +45,9 @@ void Tokenizador::Tokenizar (const string& str, list<string>& tokens) const{
     stringstream delimitersEspeciales;
     string esp;
     string contenido = str;
+    if(!tokens.empty()){
+        tokens.clear();
+    }
     if(casosEspeciales){
         delimitersEspeciales.str(delimiters + " ");
         esp = delimitersEspeciales.str();
@@ -405,6 +408,9 @@ int Tokenizador::DetectarCasosEspeciales(const string& t,string::size_type& p, s
                     a = p = t.find_first_of(de,a);
                 }
             }while(!detener);
+            if(t[p-1] == '-'){
+                p = p-1;
+            }
             if(p == string::npos){
                 if(t[t.size()-1] == '-'){
                     p = t.size()-1;
@@ -447,7 +453,7 @@ void Tokenizador::QuitarAcentosMayus(string& c) const{
         else if(c[i] == 'é' || c[i] == 'è' || c[i] == 'É' || c[i] == 'È'){
             c.replace(i,1,"e");
         }
-        else if(c[i] == 'á' || c[i] == 'à' || c[i] == 'Á' || c[i] == 'À'){
+        else if(c[i] == 'á' || c[i] == 'è' || c[i] == 'É' || c[i] == 'È'){
             c.replace(i,1,"a");
         }
         else if(c[i] == 'í' || c[i] == 'ì' || c[i] == 'Í' || c[i] == 'Ì'){
@@ -456,7 +462,7 @@ void Tokenizador::QuitarAcentosMayus(string& c) const{
         else if(c[i] == 'ú' || c[i] == 'ù' || c[i] == 'Ú' || c[i] == 'Ù'){
             c.replace(i,1,"u");
         }
-        if((c[i]>='A' && c[i] <= 'Z') || c[i] == '?'){
+        if((c[i]>='A' && c[i] <= 'Z') || c[i] == 'Ñ'){
             c[i] += 32;
         }
     }
