@@ -49,6 +49,7 @@ void Tokenizador::Tokenizar (const string& str, list<string>& tokens) const{
         delimitersEspeciales.str(delimiters + " ");
         esp = delimitersEspeciales.str();
     }
+
     string prueba = "";
     int estado = -1;
     if(pasarAminuscSinAcentos){
@@ -65,13 +66,15 @@ void Tokenizador::Tokenizar (const string& str, list<string>& tokens) const{
     }
     //cout<<"Pos: "<<pos<<"LastPos: "<<lastPos;
     while(string::npos != pos || string::npos != lastPos){
+        //cout<<"Hola";
         if(casosEspeciales){
             //cout<<"Pos: " <<pos;
             estado = DetectarCasosEspeciales(contenido,pos, lastPos, esp);
-            if(estado = 2){
+            //cout<<"El estado es: " <<estado;
+            if(estado == 2){
                 if(lastPos>0){
                     if(contenido[lastPos-1] == ',' || contenido[lastPos-1] == '.'){
-                        prueba = contenido.substr(lastPos-1, pos-lastPos);
+                        prueba = contenido.substr(lastPos-1, pos-lastPos+1);
                         prueba.insert(prueba.begin(),'0');
                     }
                 }
@@ -138,6 +141,7 @@ bool Tokenizador::TokenizarListaFicheros(const string& NomFichEntrada) const{
     ifstream i;
     string cadena;
     bool devolver = true;
+    list<string> tokeni;
     i.open(NomFichEntrada.c_str());
     if(!i){
         cerr<<"EROR: no se ha podido abrir el archivo";
@@ -148,11 +152,17 @@ bool Tokenizador::TokenizarListaFicheros(const string& NomFichEntrada) const{
             cadena="";
             getline(i,cadena);
             if(cadena.length()!=0){
-                if(!Tokenizar(cadena)){
+                tokeni.push_back(cadena);
+                /*if(!Tokenizar(cadena)){
                     devolver = false;
-                }
+                }*/
             }
         }
+    }
+    list<string>::iterator itS;
+    for(itS = tokeni.begin(); itS!=tokeni.end();itS++){
+        if(!Tokenizar(*itS));
+            devolver = false;
     }
     return devolver;
 }
@@ -214,6 +224,7 @@ int Tokenizador::DetectarCasosEspeciales(const string& t,string::size_type& p, s
     int arroba = 0;
     bool coma = false;
     bool numeros = true;
+    bool restar = false;
     if(t.substr(pi,4).compare("ftp:") == 0|| t.substr(pi,5).compare("http:") == 0|| t.substr(pi,6).compare("https:") == 0){
         if(t[p] == '_' || t[p] == ':' || t[p] == '/' || t[p] == '.' || t[p] == '?' || t[p] == '&' || t[p] == '-' || t[p] == '=' || t[p] == '#' || t[p] == '@'){ 
             estado = 1;
@@ -235,8 +246,12 @@ int Tokenizador::DetectarCasosEspeciales(const string& t,string::size_type& p, s
             }
         }
     }
-    if((t[p] == '.' || t[p] == ',') && numeros){
-        estado = 2;
+    if(numeros){
+        if(t[pi-1] == ',' || t[pi-1] == '.' || t[p] == ',' || t[p] == '.')
+            estado = 2;
+        if(t[p] == ','){
+            coma = true;
+        }
     }
     else if(t[p] == '@'){
         estado = 3;
@@ -275,41 +290,71 @@ int Tokenizador::DetectarCasosEspeciales(const string& t,string::size_type& p, s
                 }
             }
             break;
-
+        //rehacer
         case 2:
             b = a = p;
-            do{
-                a = t.find_first_of(de,a+1);
-                if(a!= string::npos){
-                    for(int i = b; i<a; i++){
-                        if(!esNumero(t[i])){
-                            //cout<<t[i]<<" ";
-                            numeros = false;
+            if(t[p] != ' '){
+                do{
+                    a = t.find_first_of(de,a+1);
+                    if(t[a]== ','){
+                        coma = true;
+                    }
+                    //cout<<"B: "<<b<<" A: "<<a;
+                    //cout<<"Caracter de b: "<<t[b]<<" Caracter de a: "<<t[a];
+                    if(p!= string::npos){
+                        for(int i = pi; i<p; i++){
+                            if(!esNumero(t[i])){
+                                numeros = false;
+                                detener = true;
+                                if(!coma){
+                                    estado = 4;
+                                }
+                            }
                         }
                     }
-                }
-                else if(a == string::npos){
-                    for(int i = b; i<t.size(); i++){
-                        if(!esNumero(t[i])){
-                            //cout<<t[i]<<" ";
-                            numeros = false;
+                    else if(p == string::npos){
+                        for(int i = pi; i<t.size(); i++){
+                            if(!esNumero(t[i])){
+                                //cout<<t[i]<<" ";
+                                numeros = false;
+                                detener = true;
+                                if(!coma){
+                                    estado = 4;
+                                }
+                            }
                         }
                     }
+                    if(a - b == 1){
+                        //cout<<"HOLa";
+                        p = b;
+                        detener = true;
+                    }
+                    if(t[a] != '.' && t[a] != ',' && !detener){
+                        //cout<<"hola";
+                        p = a;
+                        detener = true;
+                    }
+                    if(t[a] == ' ' && !detener){
+                        //cout<<"Hola";
+                        p = b;
+                        detener = true;
+                    }
+                    if(t[a] == ' ' && (t[a-1] == '$' || t[a-1] == '%')){
+                        if(p != string::npos)
+                            p = p-1;
+                    }
+                    if(a == string::npos && (t[t.size()-1] == '$' || t[t.size()-1] == '%')){
+                        //cout<<"Hola";
+                        p = t.size()-1;
+                    }
+                    b= a;
+                }while(a != string::npos && !detener && (t[a] == '.' || t[a] == ','));
+                if(p == string::npos){
+                    //cout<<t[t.size()-1]<<" ";
+                    if(t[t.size()-1] == '.' || t[t.size()-1] == ','){
+                        p = t.size()-1;
+                    }
                 }
-                if(a - b == 1 && numeros){
-                    p = b;
-                    detener = true;
-                }
-                
-                else if(t[a] != '.' && t[a] != ',' && numeros){
-                    p = a;
-                    detener = true;
-                }
-                b = a;
-
-            }while(a != string::npos && !detener && (t[a] == '.'|| t[a] ==','));
-            if(a == string::npos && numeros){
-                p = a;
             }
             break;
 
@@ -376,7 +421,7 @@ int Tokenizador::DetectarCasosEspeciales(const string& t,string::size_type& p, s
                     p = b;
                     detener = true;
                 }
-                else if(t[a] != '.'){
+                if(t[a] != '.' && !detener){
                     p = a;
                     detener = true;
                 }
