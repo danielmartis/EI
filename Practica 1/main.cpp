@@ -11,7 +11,7 @@ void comprobar(list<string> obtenido, list<string> esperado, string caso){
 		cout<<"correcto ";
 	}
 	else{
-		cout<<"error ";
+		cout<<"error\n ";
 		list<string>::iterator itO,itC;
 		cout<<"Obtenido: ";
 		for(itO = obtenido.begin(); itO!= obtenido.end();itO++){
@@ -73,7 +73,7 @@ void numeros7(Tokenizador tk){
 	string cad = "...10.000.a.000 ,,23.05 10/12/85 1,23E+10";
 	list<string> obt;
 	tk.Tokenizar(cad,obt);
-	comprobar(obt,{"0.10.000.a.000","0,23.05","10/12/85","1","23E+10"},"numeros7");
+	comprobar(obt,{"10.000.a.000","0,23.05","10/12/85","1","23E+10"},"numeros7");
 }
 
 void numeros8(Tokenizador tk){
@@ -85,10 +85,10 @@ void numeros8(Tokenizador tk){
 
 
 void numeros9(Tokenizador tk){
-	string cad = ".3..2 4,,,,5 ..35";
+	string cad = "3..2 4,,,,5 ..35";
 	list<string> obt;
 	tk.Tokenizar(cad,obt);
-	comprobar(obt,{"0.3","0.2","4","0,5","0.35"},"numeros9");
+	comprobar(obt,{"3","0.2","4","0,5","0.35"},"numeros9");
 }
 
 void num1(Tokenizador tk){
@@ -101,6 +101,24 @@ void num1(Tokenizador tk){
 	numeros7(tk);
 	numeros8(tk);
 	numeros9(tk);
+}
+
+void numeros10(Tokenizador tk){
+	string cad = "...10.000.a.000 ,,23.05 10/12/85 1,23E+10";
+	list<string> obt;
+	tk.Tokenizar(cad,obt);
+	comprobar(obt,{"...10.000.a.000",",,23.05","10/12/85","1,23E+10"},"numeros9");
+}
+
+void numeros11(Tokenizador tk){
+	string cad = "3..2 4,,,,5 ..35";
+	list<string> obt;
+	tk.Tokenizar(cad,obt);
+	comprobar(obt,{"3..2","4,,,,5","..35"},"numeros9");
+}
+void num2(Tokenizador tk){
+	numeros10(tk);
+	numeros11(tk);
 }
 
 void guion1(Tokenizador tk){
@@ -544,17 +562,18 @@ double getcputime(void){
 }
 
 int main(int argc, char* argv[]) {
-	Tokenizador tk("-#",true,false);
-	string NombreArchivo = "prueba";
+	Tokenizador tk(",;:.-/+*\\ '\"()[]{}<>!¡¿?&#=\t\n\r@",true,false);
+	string NombreArchivo = "listaFicheros.txt";
+	list<string> tokens;
 	long double aa = getcputime();
-	
 	//GUIONES
-	/*gui1(tk);
+	/*tk.DelimitadoresPalabra("-#");
+	gui1(tk);
 	tk.DelimitadoresPalabra("/ ");
-	gui2(tk);*/
+	gui2(tk);
 
 	//URLS
-	/*tk.DelimitadoresPalabra(",");
+	tk.DelimitadoresPalabra(",");
 	urls1(tk);
 	tk.DelimitadoresPalabra("@");
 	urls2(tk);
@@ -566,15 +585,15 @@ int main(int argc, char* argv[]) {
 	urls5(tk);
 	tk.PasarAminuscSinAcentos(true);
 	urls6(tk);
-	tk.PasarAminuscSinAcentos(false);*/
+	tk.PasarAminuscSinAcentos(false);
 
 	//E-MAILS.
-	/*tk.DelimitadoresPalabra("@.&");
+	tk.DelimitadoresPalabra("@.&");
 	ems1(tk);
 	tk.DelimitadoresPalabra("&.");
 	ems2(tk);
 	tk.DelimitadoresPalabra("@.-_");
-	ems3(tk);*/
+	ems3(tk);
 
 	//ACRONIMOS
 	tk.DelimitadoresPalabra("@.&");
@@ -583,10 +602,14 @@ int main(int argc, char* argv[]) {
 	acros2(tk);
 	tk.DelimitadoresPalabra("&");
 	acros3(tk);
-	//NUMEROS
-	//num1(tk);
-	
 
+	//NUMEROS
+	tk.DelimitadoresPalabra("@.,&");
+	num1(tk);
+	tk.DelimitadoresPalabra("");
+	num2(tk);*/
+
+	tk.TokenizarListaFicheros(NombreArchivo);
 	cout<<tk<<endl;
 	cout<< "Ha tardado "<<getcputime() - aa << " segundos"<<endl;
 	return 0;
